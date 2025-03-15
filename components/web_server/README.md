@@ -4,7 +4,7 @@
 This module implements a lightweight HTTP server for the ESP32-based GPIO Box. It handles:
 - Authentication via session-based cookies
 - Serving dynamic HTML pages from SPIFFS
-- Placeholder-based content injection for dynamic values
+- Placeholder-based content injection for dynamic values 
 
 The web server allows users to configure the device settings via a browser interface while ensuring secure access control.
 
