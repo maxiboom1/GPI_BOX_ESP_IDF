@@ -25,7 +25,6 @@ static char* serve_file(const char *filename)
 }
 
 
-
 static esp_err_t serve_login_page(httpd_req_t *req, bool loginFailed)
 {
     const char *errorMsg = loginFailed ? "<p style='color:red;'>No match, try again</p>" : "";
@@ -48,9 +47,6 @@ static esp_err_t serve_login_page(httpd_req_t *req, bool loginFailed)
 }
 
 
-
-
-
 static esp_err_t serve_config_page(httpd_req_t *req)
 {
     const char *configPage =
@@ -65,10 +61,6 @@ static esp_err_t serve_config_page(httpd_req_t *req)
     httpd_resp_send(req, configPage, HTTPD_RESP_USE_STRLEN);
     return ESP_OK;
 }
-
-
-
-
 
 
 static esp_err_t handle_login(httpd_req_t *req)
@@ -90,10 +82,6 @@ static esp_err_t handle_login(httpd_req_t *req)
 }
 
 
-
-
-
-
 static esp_err_t HTTP_get_router(httpd_req_t *req)
 {
     char buf[200];
@@ -108,10 +96,6 @@ static esp_err_t HTTP_get_router(httpd_req_t *req)
     }
     return serve_login_page(req, false);
 }
-
-
-
-
 
 
 esp_err_t start_webserver(void)
