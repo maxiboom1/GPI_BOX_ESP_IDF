@@ -1,17 +1,17 @@
 #include "eth_setup.h"
 #include "esp_log.h"
 #include "esp_eth.h"
-#include "esp_eth_netif_glue.h" 
+#include "esp_eth_netif_glue.h"
 #include "ethernet_init.h"
 #include "lwip/ip_addr.h"
 #include "esp_netif.h"
 #include "esp_event.h"
+#include "app_config.h"  
 
 static const char *TAG = "ETH_SETUP";
 
 esp_err_t init_ethernet_static(void)
 {
-    esp_err_t ret = ESP_OK;
     uint8_t eth_port_cnt = 0;
     esp_eth_handle_t *eth_handles = NULL;
 
@@ -30,19 +30,21 @@ esp_err_t init_ethernet_static(void)
     esp_eth_netif_glue_handle_t eth_netif_glue = esp_eth_new_netif_glue(eth_handles[0]);
     ESP_ERROR_CHECK(esp_netif_attach(eth_netif, eth_netif_glue));
 
-    // Static IP configuration
+    //Load IP settings from globalConfig
     esp_netif_ip_info_t ip_info;
-    IP4_ADDR(&ip_info.ip, 10, 168, 0, 177);
-    IP4_ADDR(&ip_info.gw, 10, 168, 0, 1);
-    IP4_ADDR(&ip_info.netmask, 255, 255, 255, 0);
+    ip_info.ip.addr = globalConfig.deviceIp;
+    ip_info.gw.addr = globalConfig.gateway;
+    ip_info.netmask.addr = globalConfig.subnetMask;
 
+    //Apply static IP
     ESP_ERROR_CHECK(esp_netif_dhcpc_stop(eth_netif));
     ESP_ERROR_CHECK(esp_netif_set_ip_info(eth_netif, &ip_info));
 
     // Start Ethernet
     ESP_ERROR_CHECK(esp_eth_start(eth_handles[0]));
 
-    ESP_LOGI("ETH_SETUP", "Ethernet configured with static IP: 10.168.0.177");
+    ESP_LOGI(TAG, "Ethernet configured with IP: " IPSTR ", Gateway: " IPSTR ", Mask: " IPSTR,
+             IP2STR(&ip_info.ip), IP2STR(&ip_info.gw), IP2STR(&ip_info.netmask));
 
     return ESP_OK;
 }
