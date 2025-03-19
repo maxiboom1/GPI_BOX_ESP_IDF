@@ -21,7 +21,7 @@ The `app_config` module handles the **storage, retrieval, and management** of de
 The module maintains a **global configuration object**:
 
 ```c
-extern AppConfig globalConfig;
+extern AppConfig globalConfig; 
 ```
 - `globalConfig` is accessible across the entire application, allowing modules to read configuration values dynamically.
 - It is automatically loaded at startup and synchronized with NVS whenever `save_config()` is called.
