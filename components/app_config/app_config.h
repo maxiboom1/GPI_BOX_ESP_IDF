@@ -7,8 +7,9 @@ typedef struct {
     uint32_t deviceIp;
     uint32_t gateway;
     uint32_t subnetMask;
-    uint8_t companion_mode;
-    uint16_t companion_port;
+    uint32_t companionIp;
+    uint16_t companionPort;
+    uint8_t  companionMode;
     uint8_t tcpEnabled;
     uint32_t tcpIp;
     uint16_t tcpPort;

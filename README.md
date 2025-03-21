@@ -2,7 +2,7 @@
 
 ## Overview
 
-The GPIO Box is an ESP32-based device designed to monitor 8 GPIO input pins (GPI-1 to GPI-8) and send their state changes as structured JSON messages via user-configurable communication interfaces: Serial, TCP, and HTTP. It supports 8 GPIO output pins (GPO-1 to GPO-8) reserved for future remote triggering. A minimal web-based configuration page allows users to set device behavior, communication modes, and security options, with all configurations stored persistently in EEPROM. The device includes a reset button to restore factory defaults, ensuring robust operation and ease of recovery.
+The GPIO Box is an ESP32-based device designed to monitor 8 GPIO input pins (GPI-1 to GPI-8) and send their state changes as structured JSON messages via user-configurable communication interfaces: Serial, TCP, and HTTP. It supports 8 GPIO output pins (GPO-1 to GPO-8) reserved for future remote triggering. A minimal web-based configuration page allows users to set device behavior, communication modes, and security options, with all configurations stored persistently in NVR. The device includes a reset button to restore factory defaults, ensuring robust operation and ease of recovery.
 
 ## General Purpose
 
@@ -105,7 +105,7 @@ The GPIO Box serves as a versatile, network-enabled input/output controller for 
   ```
 
 ### 5. Persistence and Reset
-- **EEPROM Storage**: All configuration options stored in EEPROM, restored on boot.
+- **NVR Storage**: All configuration options stored in NVR, restored on boot.
 - **Reset Button**: Physical button (GPIO 0) resets to factory defaults (e.g., all interfaces disabled, IP/URL/ports empty, admin password `admin`).
 
 ### 6. Session Authentication
@@ -159,36 +159,34 @@ The GPIO Box serves as a versatile, network-enabled input/output controller for 
 - RX0/TX0 (GPIO 1, 3) can be repurposed later if Serial isn’t needed, but keep for debugging now.
 - All GPI/GPO pins support input/output, PWM, interrupt—adequate for our needs.
 
-## EEPROM Structure
+## NVR memory Structure
 
-| **Field**      | **Size (Bytes)** | **Offset** | **Default Value** |
-| -------------- | ---------------- | ---------- | ----------------- |
-| Device IP      | 4                | 0-3        | `10.168.0.177`    |
-| Gateway        | 4                | 4-7        | `10.168.0.1`      |
-| Subnet Mask    | 4                | 8-11       | `255.255.255.0`   |
-| Companion Mode | 1                | 12         | 0 (off)           |
-| Companion Port | 2                | 13-14      | `51234`           |
-| TCP Enabled    | 1                | 15         | 0 (off)           |
-| TCP IP         | 4                | 16-19      | `0.0.0.0` (empty) |
-| TCP Port       | 2                | 20-21      | 0 (empty)         |
-| TCP Secure     | 1                | 22         | 0 (off)           |
-| TCP User       | 32               | 23-54      | `""` (empty)      |
-| TCP Password   | 32               | 55-86      | `""` (empty)      |
-| HTTP Enabled   | 1                | 87         | 0 (off)           |
-| HTTP URL       | 64               | 88-151     | `""` (empty)      |
-| HTTP Secure    | 1                | 152        | 0 (off)           |
-| HTTP User      | 32               | 153-184    | `""` (empty)      |
-| HTTP Password  | 32               | 185-216    | `""` (empty)      |
-| Serial Enabled | 1                | 217        | 0 (off)           |
-| Admin Password | 32               | 218-249    | `"admin"`         |
-| Config Flag    | 1                | 250        | 0xAA (configured) |
-| **Total**      | **251 bytes**    |            |                   |
+| **Field**      | **Size (Bytes)** | **Default Value** |
+| -------------- | ---------------- | ----------------- |
+| Device IP      | 4                | `10.168.0.177`    |
+| Gateway        | 4                | `10.168.0.1`      |
+| Subnet Mask    | 4                | `255.255.255.0`   |
+| Companion Mode | 1                | 0 (off)           |
+| Companion Port | 2                | `9567`            |
+| Companion Addr | 4                | `0.0.0.0`         |
+| TCP Enabled    | 1                | 0 (off)           |
+| TCP IP         | 4                | `0.0.0.0` (empty) |
+| TCP Port       | 2                | 0 (empty)         |
+| TCP Secure     | 1                | 0 (off)           |
+| TCP User       | 32               | `""` (empty)      |
+| TCP Password   | 32               | `""` (empty)      |
+| HTTP Enabled   | 1                | 0 (off)           |
+| HTTP URL       | 64               | `""` (empty)      |
+| HTTP Secure    | 1                | 0 (off)           |
+| HTTP User      | 32               | `""` (empty)      |
+| HTTP Password  | 32               | `""` (empty)      |
+| Serial Enabled | 1                | 0 (off)           |
+| Admin Password | 32               | `"admin"`         |
+| Config Flag    | 1                | 0xAA (configured) |
 
-#### Notes:
-- Fits within ESP32’s 512-byte EEPROM.
 - **Config Flag** ensures valid config (reset to `0x00` for defaults).
 - Empty IP/URL/port defaults to 0.0.0.0, `""`, or 0, requiring user configuration.
-- URL length (64 bytes, offset 77-140) allows up to 64 characters (e.g., `http://10.168.0.10/api` fits, max length for URLs in EEPROM).
+- URL length (64 bytes, offset 77-140) allows up to 64 characters (e.g., `http://10.168.0.10/api` fits, max length for URLs in NVR).
 
 ## Future Enhancements
 
@@ -197,66 +195,11 @@ The GPIO Box serves as a versatile, network-enabled input/output controller for 
 
 ## Change Log
 
-#### V 0.03:
-- Implemented MessageBuilder.h module to construct messages.
-- Implemented 8 GPI pins handling logic.
+V-0.1
 
-#### V 0.04:
-- Implemented a persistent TCP connection instead of reconnecting per message.
-- Added automatic reconnection every 5 seconds if the server is unreachable.
-- Managed connection state to avoid unnecessary reconnections.
-- Stopped TCP communication when `tcpEnabled` is disabled in the config.
-- Integrated `TcpClient.h` into `Gpio_Box_V0.04.ino` for seamless TCP messaging.
-
-#### V 0.05:
-- Refactored message handling into separate functions for TCP, HTTP, and Serial.
-- Fixed Secure Mode handling, ensuring correct user/password usage for TCP and HTTP.
-- Updated `HttpClient.h` to retrieve the HTTP URL from EEPROM instead of using a hardcoded value.
-- Modified `sendHttpPost()` to accept the JSON message as a parameter.
-- The only issue that the http url cannot pars port from url in current version. We will fix it in 0.06
-
-#### V 0.06:
-- Fixed HTTP URL handling to correctly support custom ports (e.g., `10.168.0.10:5000/api`).
-- Increased JSON parsing buffer size from `512` to `2048` to prevent `NoMemory` errors.
-- Verified that URLs with and without ports are stored and parsed correctly.
-- Added error print in Json parser.
-
-#### V 0.07:
-- Implemented **client-side validation** for all configuration fields.
-- **Ensured validation logic applies only to enabled TCP/HTTP fields**, preventing unnecessary alerts while keeping stored values intact.
-- **Fixed admin password handling** so it is only updated if a new value is entered.
-- Added a **two-step enable/disable mechanism** to dynamically control form fields.
-- Ensured **form submission only includes enabled settings**, preventing unwanted overwrites.
-- **Always sends `tcpEnabled` and `httpEnabled` states**, even when disabled, ensuring the backend updates these settings correctly when toggled off.
-- Refactored **config page JavaScript** to streamline secure mode toggling and validation logic.
-- Improved **page load behavior**, dynamically setting input field states based on stored configuration.
-- **Updated backend to merge incoming configuration with stored values**, preventing unintended data loss.
-
-#### V 0.08:
-- Implemented **Factory Reset Button** functionality (GPIO 0):
-  - Holding the "BOOT" button for **≥ 5 seconds** resets the configuration to factory defaults.
-  - Reset action provides visual LCD feedback and device restart.
-- Verified proper storage and reloading of default configuration settings after reset.
-
-#### V 0.09:
-- Implemented **cookie-based session authentication**:
-  - Added session cookie (`sessionToken=loggedIn`) upon successful login.
-  - Cookie expires automatically when the browser/tab is closed.
-  - Subsequent browser requests automatically send this cookie, removing the need for repeated authentication.
-  - No persistent session state is maintained on the device, ensuring simplicity and efficient resource usage.
-- **Refactored `handleLogin` function** for improved readability and maintainability:
-  - Credentials extraction logic moved into a dedicated helper function (`extractCredentials`).
-  - Improved error handling with clear and reusable responses.
-- Simplified URL structure:
-  - **Eliminated the separate `/login` endpoint**.
-  - Login and configuration pages are now served seamlessly from the root (`/`) URL, improving user experience and URL clarity.
-
-#### V 1.00:
-- Implemented enhanced **login user experience**:
-  - Incorrect credentials no longer redirect to a separate page.
-  - Users see a clear, inline red-colored error message: "**No match, try again**".
-- Removed unused `sendUnauthorizedResponse` function for cleaner backend code.
-- Tested with external power supply.
-
-#### V 1.01:
-- Migrating to esp-idf, which has optimized libraries to work with ESP32.
+- Added companion ip
+- Updated readme that no eeprom - we are using now NVS
+- Serving now full config page from NVS (index.html styles.css index.js)
+- Added routes to index.html and styles.css
+- serve_file func simple receives filename, loads it from NVR, and sends with 512b chunks. No memory overload, no matter the file size.
+- Filled HTML forms with placeholders {{P01}}. Now we are ready to insert data instead the placeholders, and then handling submitting from user.

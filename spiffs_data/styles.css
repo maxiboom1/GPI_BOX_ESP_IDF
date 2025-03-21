@@ -1,0 +1,11 @@
+body {
+    font-family: Arial;
+}
+
+input {
+    margin: 2.5px;
+}
+
+.hidden{
+    display: none;
+}

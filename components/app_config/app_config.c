@@ -79,8 +79,11 @@ void set_default_config(void) {
     globalConfig.deviceIp = ipaddr_addr("10.168.0.177");
     globalConfig.gateway = ipaddr_addr("10.168.0.1");
     globalConfig.subnetMask = ipaddr_addr("255.255.255.0");
-    globalConfig.companion_mode = 0;
-    globalConfig.companion_port = 51234;
+
+    globalConfig.companionIp = ipaddr_addr("0.0.0.0");
+    globalConfig.companionPort = 9567;
+    globalConfig.companionMode = 0;
+    
     globalConfig.tcpEnabled = 0;
     globalConfig.tcpIp = ipaddr_addr("0.0.0.0");
     globalConfig.tcpPort = 0;

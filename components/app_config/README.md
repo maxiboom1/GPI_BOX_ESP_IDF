@@ -42,3 +42,5 @@ extern AppConfig globalConfig;
 - **Ensures data integrity** using NVS commit operations.
 
 This module provides a **centralized and reliable configuration system** for the ESP32 GPIO Box.
+
+

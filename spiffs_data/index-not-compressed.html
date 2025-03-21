@@ -1,0 +1,64 @@
+<html>
+<head><link rel="stylesheet" href="styles.css"></head>
+<body>
+    <h2>GPIO Box Configuration</h2>
+    <hr>
+    <form id="configForm" onsubmit="return validateForm(event)">
+        
+        <div class="network-block" id="network-block">
+            <h3>Network Settings</h3>
+                IP: <input type="text" name="ip" id="ip" value="{{P01}}"><br>
+                Gateway: <input type="text" name="gateway" id="gateway" value="{{P02}}"><br>
+                Subnet Mask: <input type="text" name="subnetMask" id="subnetMask" value="{{P03}}"><br>
+        <hr>
+        </div>
+        
+        <div class="companion-block" id="companion-block">
+            <h3>Bitfocus Companion mode</h3>
+                Enabled:<input type="checkbox" name="companionEnabled" id="companionEnabled" onchange="toggleCompanionMode()" {{P04}}><br>            
+                Companion IP: <input type="text" name="companionIp" id="companionIp" value="{{P05}}"><br>
+                Port: <input type="number" name="companionPort" id="companionPort" value="{{P06}}"><br>
+        </div>      
+        <hr>  
+        
+        <div class="manual-settings-block" id="manual-settings-block">
+            <div class="tcp-block" id="tcp-block">
+                <h3>TCP Settings</h3>
+                    Enabled:<input type="checkbox" name="tcpEnabled" id="tcpEnabled" onchange="toggleTcpSettings()" {{P07}}><br>
+                    IP:<input type="text" name="tcpIp" id="tcpIp" value="{{P08}}"><br>
+                    Port:<input type="number" name="tcpPort" id="tcpPort" value="{{P09}}"><br>
+                    Secure Mode: <input type="checkbox" name="tcpSecure" id="tcpSecure" onchange="toggleSecureMode('tcp')" {{P10}}><br>
+                    User:<input type="text" name="tcpUser" id="tcpUser" value="{{P11}}"><br>
+                    Password: <input type="password" name="tcpPassword" id="tcpPassword" value="{{P12}}"><br>
+            </div>
+            <hr>
+            
+            <div class="http-block" id="http-block">
+                <h3>HTTP Settings</h3>
+                    Enabled: <input type="checkbox" name="httpEnabled" id="httpEnabled" onchange="toggleHttpSettings()" {{P13}}><br>
+                    URL: <input type="text" name="httpUrl" id="httpUrl" value="{{P14}}"><br>
+                    Secure Mode: <input type="checkbox" name="httpSecure" id="httpSecure" onchange="toggleSecureMode('http')" {{P15}}><br>
+                    User: <input type="text" name="httpUser" id="httpUser" value="{{P16}}"><br>
+                    Password: <input type="password" name="httpPassword" id="httpPassword" value="{{P17}}"><br>
+            </div>
+            <hr>
+
+            <div class="serial-block" id="serial-block">
+                <h3>Serial Settings</h3>
+                    Enabled: <input type="checkbox" name="serialEnabled" id="serialEnabled" {{P18}}><br>
+            </div>
+            <hr>
+        </div>
+
+        <div class="admin-block" id="admin-block">
+            <h3>Admin Access</h3>
+                New Password: <input type="password" name="adminPassword" id="adminPassword" value=""><br><input type="submit" value="Save">
+        </div>
+
+        <br>
+        <br>
+    </form>
+    <script src="index.js"></script>
+    <footer style="border-top: 1px solid #ccc; padding: 10px; text-align: center;">GPIO Box v1.0</footer>
+</body>
+</html>

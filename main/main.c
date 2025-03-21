@@ -17,8 +17,4 @@ void app_main(void)
     
     ESP_LOGI("MAIN", "Loaded Config:");
 
-	ESP_LOGI("MAIN", "Serial Enabled: %d", globalConfig.serialEnabled);
-	ESP_LOGI("MAIN", "Admin Password: %s", globalConfig.adminPassword);
-
-
 }
