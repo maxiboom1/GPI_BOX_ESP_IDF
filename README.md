@@ -195,7 +195,14 @@ The GPIO Box serves as a versatile, network-enabled input/output controller for 
 
 ## Change Log
 
-V-0.1
+## v0.11
+- Implemented dynamic placeholder injection in HTML serving:
+  - `serve_file()` now reads HTML files in 512-byte chunks, detects `{{placeholder}}`, and replaces them with runtime config values.
+  - Introduced `get_placeholder_value()` to map placeholder names (e.g., `{{tcpIp}}`) to actual values in `globalConfig`.
+  - System safely handles edge cases such as placeholder overflow or cross-chunk boundaries.
+
+
+### V0.10
 
 - Added companion ip
 - Updated readme that no eeprom - we are using now NVS

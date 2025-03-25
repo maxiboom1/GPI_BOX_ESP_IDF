@@ -15,28 +15,112 @@ const char* itoa_buf(int value) {
     return buf;
 }
 
+const char* get_placeholder_value(const char* key, char* outBuf, size_t outSize) {
+    if (strcmp(key, "deviceIp") == 0) return ip4addr_ntoa((const ip4_addr_t*)&globalConfig.deviceIp);
+    if (strcmp(key, "gateway") == 0) return ip4addr_ntoa((const ip4_addr_t*)&globalConfig.gateway);
+    if (strcmp(key, "subnetMask") == 0) return ip4addr_ntoa((const ip4_addr_t*)&globalConfig.subnetMask);
+    if (strcmp(key, "companionIp") == 0) return ip4addr_ntoa((const ip4_addr_t*)&globalConfig.companionIp);
+    if (strcmp(key, "companionPort") == 0) {
+        snprintf(outBuf, outSize, "%u", globalConfig.companionPort);
+        return outBuf;
+    }
+    if (strcmp(key, "companionMode") == 0) return globalConfig.companionMode ? "checked" : "";
+    if (strcmp(key, "tcpEnabled") == 0) return globalConfig.tcpEnabled ? "checked" : "";
+    if (strcmp(key, "tcpIp") == 0) return ip4addr_ntoa((const ip4_addr_t*)&globalConfig.tcpIp);
+    if (strcmp(key, "tcpPort") == 0) {
+        snprintf(outBuf, outSize, "%u", globalConfig.tcpPort);
+        return outBuf;
+    }
+    if (strcmp(key, "tcpSecure") == 0) return globalConfig.tcpSecure ? "checked" : "";
+    if (strcmp(key, "tcpUser") == 0) return globalConfig.tcpUser;
+    if (strcmp(key, "tcpPassword") == 0) return globalConfig.tcpPassword;
+    if (strcmp(key, "httpEnabled") == 0) return globalConfig.httpEnabled ? "checked" : "";
+    if (strcmp(key, "httpUrl") == 0) return globalConfig.httpUrl;
+    if (strcmp(key, "httpSecure") == 0) return globalConfig.httpSecure ? "checked" : "";
+    if (strcmp(key, "httpUser") == 0) return globalConfig.httpUser;
+    if (strcmp(key, "httpPassword") == 0) return globalConfig.httpPassword;
+    if (strcmp(key, "serialEnabled") == 0) return globalConfig.serialEnabled ? "checked" : "";
+
+    return "";
+}
+
 // Open  given file from spiffs, and send it chunked
-static esp_err_t serve_file(httpd_req_t *req, const char *filename) {
-    char filepath[64];
-    snprintf(filepath, sizeof(filepath), "/spiffs_data/%s", filename);
-    FILE *f = fopen(filepath, "r");
+esp_err_t serve_file(httpd_req_t *req, const char *filename) {
+    FILE *f;
+    char path[64];
+    snprintf(path, sizeof(path), "/spiffs_data/%s", filename);
+    f = fopen(path, "r");
     if (!f) {
-        ESP_LOGE("SPIFFS", "Failed to open %s", filepath);
         httpd_resp_send_404(req);
         return ESP_FAIL;
     }
 
-    char buffer[512];
+    char file_buffer[512];
+    char send_buffer[512];
+    char ph_buffer[64];  // for collecting placeholder names
+    char temp_value[70]; // temp buffer for placeholder output
+
+    size_t send_len = 0;
+    size_t ph_len = 0;
+    bool in_placeholder = false;
+
     size_t bytes_read;
-    while ((bytes_read = fread(buffer, 1, sizeof(buffer), f)) > 0) {
-        esp_err_t res = httpd_resp_send_chunk(req, buffer, bytes_read);
-        if (res != ESP_OK) {
-            fclose(f);
-            return res;
+    while ((bytes_read = fread(file_buffer, 1, sizeof(file_buffer), f)) > 0) {
+        for (size_t i = 0; i < bytes_read; i++) {
+            char c = file_buffer[i];
+
+            // Start of placeholder
+            if (!in_placeholder && c == '{' && i + 1 < bytes_read && file_buffer[i + 1] == '{') {
+                in_placeholder = true;
+                ph_len = 0;
+                i++;  // skip next '{'
+                continue;
+            }
+
+            // End of placeholder
+            if (in_placeholder && c == '}' && i + 1 < bytes_read && file_buffer[i + 1] == '}') {
+                ph_buffer[ph_len] = '\0';
+                const char *value = get_placeholder_value(ph_buffer, temp_value, sizeof(temp_value));
+                size_t value_len = strlen(value);
+
+                // flush if value won't fit
+                if (send_len + value_len >= sizeof(send_buffer)) {
+                    httpd_resp_send_chunk(req, send_buffer, send_len);
+                    send_len = 0;
+                }
+
+                memcpy(send_buffer + send_len, value, value_len);
+                send_len += value_len;
+
+                i++;  // skip next '}'
+                in_placeholder = false;
+                continue;
+            }
+
+            // Inside placeholder content
+            if (in_placeholder) {
+                if (ph_len < sizeof(ph_buffer) - 1) {
+                    ph_buffer[ph_len++] = c;
+                }
+                // else: overflow — silently truncate
+            } else {
+                // Normal char
+                if (send_len >= sizeof(send_buffer)) {
+                    httpd_resp_send_chunk(req, send_buffer, send_len);
+                    send_len = 0;
+                }
+                send_buffer[send_len++] = c;
+            }
         }
     }
 
     fclose(f);
+
+    // Flush remaining send buffer
+    if (send_len > 0) {
+        httpd_resp_send_chunk(req, send_buffer, send_len);
+    }
+
     httpd_resp_send_chunk(req, NULL, 0);  // End of response
     return ESP_OK;
 }
