@@ -6,6 +6,9 @@
 #include <string.h>
 #include "app_config.h"  
 #include "lwip/ip4_addr.h"
+#include "cJSON.h"
+#include "eth_setup.h"
+
 
 static const char *TAG = "web_server";
 
@@ -190,6 +193,84 @@ static esp_err_t serve_css_handler(httpd_req_t *req) {
     return serve_file(req, "styles.css");
 }
 
+static esp_err_t handle_save_config(httpd_req_t *req) {
+    char buf[1024];
+    int ret = httpd_req_recv(req, buf, sizeof(buf) - 1);
+    if (ret <= 0) {
+        ESP_LOGE(TAG, "Failed to receive config data");
+        return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid data");
+    }
+    buf[ret] = '\0';
+    ESP_LOGI(TAG, "Received config JSON:\n%s", buf);
+
+    cJSON *json = cJSON_Parse(buf);
+    if (!json) {
+        ESP_LOGE(TAG, "JSON parsing failed");
+        return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid JSON");
+    }
+
+    const char* val;
+
+    // Network
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "ip"))))
+        globalConfig.deviceIp = ipaddr_addr(val);
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "gateway"))))
+        globalConfig.gateway = ipaddr_addr(val);
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "subnetMask"))))
+        globalConfig.subnetMask = ipaddr_addr(val);
+
+    // Companion
+    if (cJSON_HasObjectItem(json, "companionMode"))
+        globalConfig.companionMode = cJSON_IsTrue(cJSON_GetObjectItem(json, "companionMode")) ? 1 : 0;
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "companionIp"))))
+        globalConfig.companionIp = ipaddr_addr(val);
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "companionPort"))))
+        globalConfig.companionPort = atoi(val);
+
+    // TCP
+    if (cJSON_HasObjectItem(json, "tcpEnabled"))
+        globalConfig.tcpEnabled = cJSON_IsTrue(cJSON_GetObjectItem(json, "tcpEnabled")) ? 1 : 0;
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "tcpIp"))))
+        globalConfig.tcpIp = ipaddr_addr(val);
+    if (cJSON_HasObjectItem(json, "tcpPort"))
+        globalConfig.tcpPort = cJSON_GetObjectItem(json, "tcpPort")->valueint;
+    if (cJSON_HasObjectItem(json, "tcpSecure"))
+        globalConfig.tcpSecure = cJSON_IsTrue(cJSON_GetObjectItem(json, "tcpSecure")) ? 1 : 0;
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "tcpUser"))))
+        strncpy(globalConfig.tcpUser, val, sizeof(globalConfig.tcpUser));
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "tcpPassword"))))
+        strncpy(globalConfig.tcpPassword, val, sizeof(globalConfig.tcpPassword));
+
+    // HTTP
+    if (cJSON_HasObjectItem(json, "httpEnabled"))
+        globalConfig.httpEnabled = cJSON_IsTrue(cJSON_GetObjectItem(json, "httpEnabled")) ? 1 : 0;
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "httpUrl"))))
+        strncpy(globalConfig.httpUrl, val, sizeof(globalConfig.httpUrl));
+    if (cJSON_HasObjectItem(json, "httpSecure"))
+        globalConfig.httpSecure = cJSON_IsTrue(cJSON_GetObjectItem(json, "httpSecure")) ? 1 : 0;
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "httpUser"))))
+        strncpy(globalConfig.httpUser, val, sizeof(globalConfig.httpUser));
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "httpPassword"))))
+        strncpy(globalConfig.httpPassword, val, sizeof(globalConfig.httpPassword));
+
+    // Serial
+    if (cJSON_HasObjectItem(json, "serialEnabled"))
+        globalConfig.serialEnabled = cJSON_IsTrue(cJSON_GetObjectItem(json, "serialEnabled")) ? 1 : 0;
+
+    // Admin password (only update if not empty)
+    val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "adminPassword"));
+    if (val && strlen(val) > 0)
+        strncpy(globalConfig.adminPassword, val, sizeof(globalConfig.adminPassword));
+
+    cJSON_Delete(json);
+    save_config();
+    reapply_eth_config();  // Apply static IP change without reboot
+    httpd_resp_set_status(req, "302 Found");
+    httpd_resp_set_hdr(req, "Location", "/");
+    return httpd_resp_send(req, NULL, 0);
+}
+
+
 esp_err_t start_webserver(void) {
     httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
@@ -225,11 +306,19 @@ esp_err_t start_webserver(void) {
             .user_ctx = NULL
         };
 
+        httpd_uri_t save_uri = {
+            .uri      = "/save",
+            .method   = HTTP_POST,
+            .handler  = handle_save_config,
+            .user_ctx = NULL
+        };
+        
         httpd_register_uri_handler(server, &root_uri);
         httpd_register_uri_handler(server, &post_uri);
         httpd_register_uri_handler(server, &js_uri);
         httpd_register_uri_handler(server, &css_uri);
-        
+        httpd_register_uri_handler(server, &save_uri);
+       
         ESP_LOGI(TAG, "HTTP Server started successfully");
         return ESP_OK;
     }

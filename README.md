@@ -195,12 +195,24 @@ The GPIO Box serves as a versatile, network-enabled input/output controller for 
 
 ## Change Log
 
+## v0.12
+- Added support for dynamic config saving via `/save`:
+  - Configuration form now submits JSON payload.
+  - Backend parses and **merges** only provided fields into `globalConfig`.
+  - Preserves existing values for omitted fields (e.g., disabled TCP/HTTP blocks).
+
+- Introduced `get_placeholder_value()` to map dynamic values for HTML injection.
+
+- Implemented live Ethernet reconfiguration:
+  - New function `reapply_eth_config()` applies static IP changes without reboot.
+  - Automatically called after saving config.
+  - Safely skips DHCP stop if already disabled.
+
 ## v0.11
 - Implemented dynamic placeholder injection in HTML serving:
   - `serve_file()` now reads HTML files in 512-byte chunks, detects `{{placeholder}}`, and replaces them with runtime config values.
   - Introduced `get_placeholder_value()` to map placeholder names (e.g., `{{tcpIp}}`) to actual values in `globalConfig`.
   - System safely handles edge cases such as placeholder overflow or cross-chunk boundaries.
-
 
 ### V0.10
 
