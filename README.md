@@ -195,6 +195,19 @@ The GPIO Box serves as a versatile, network-enabled input/output controller for 
 
 ## Change Log
 
+## v0.14
+- Implemented `http_client` component for sending JSON via HTTP POST:
+  - Uses `esp_http_client`
+  - Posts to a hardcoded URL for now (planned to use `globalConfig.httpUrl`)
+  - Clean structure with `UrlObj` parser (`host`, `port`, `path`) ready for dynamic use
+
+- Added `parse_http_url()` utility to extract host, port, and path from config URL
+
+- Introduced `MessageBuilder` component:
+  - Generates JSON messages using `cJSON`
+  - Avoids dynamic allocation (`malloc`) in final version
+  - Automatically pulls `user` and `password` from `globalConfig` for simplicity
+
 ## v0.13
 - Replaced hardcoded login password with real config value:
   - `handle_login()` now validates against `globalConfig.adminPassword`

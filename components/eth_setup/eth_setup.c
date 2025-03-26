@@ -1,12 +1,12 @@
 #include "eth_setup.h"
 #include "esp_log.h"
 #include "esp_eth.h"
-#include "esp_eth_netif_glue.h"
 #include "ethernet_init.h"
 #include "lwip/ip_addr.h"
 #include "esp_netif.h"
 #include "esp_event.h"
 #include "app_config.h"  
+
 
 static const char *TAG = "ETH_SETUP";
 static esp_netif_t *eth_netif = NULL;
@@ -38,8 +38,8 @@ esp_err_t init_ethernet_static(void)
     ESP_ERROR_CHECK(esp_netif_dhcpc_stop(eth_netif));
     ESP_ERROR_CHECK(esp_netif_set_ip_info(eth_netif, &ip_info));
     ESP_ERROR_CHECK(esp_eth_start(eth_handle));
-
     ESP_LOGI(TAG, "Ethernet configured with IP: " IPSTR, IP2STR(&ip_info.ip));
+    
     return ESP_OK;
 }
 
