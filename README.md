@@ -195,6 +195,12 @@ The GPIO Box serves as a versatile, network-enabled input/output controller for 
 
 ## Change Log
 
+## v0.13
+- Replaced hardcoded login password with real config value:
+  - `handle_login()` now validates against `globalConfig.adminPassword`
+  - Input is parsed safely using C string methods with null-termination protection.
+
+
 ## v0.12
 - Added support for dynamic config saving via `/save`:
   - Configuration form now submits JSON payload.

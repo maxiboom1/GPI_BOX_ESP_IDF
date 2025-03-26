@@ -156,17 +156,28 @@ static esp_err_t handle_login(httpd_req_t *req) {
     char content[100];
     int ret = httpd_req_recv(req, content, sizeof(content) - 1);
     if (ret <= 0) {
-        return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Bad Request"); // Bad request
+        return httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Bad Request");
     }
     content[ret] = '\0';
 
-    if (strstr(content, "user=admin") && strstr(content, "password=1234")) {
-        httpd_resp_set_hdr(req, "Set-Cookie", "sessionToken=loggedIn; Path=/;");
-        httpd_resp_set_status(req, "302 Found");
-        httpd_resp_set_hdr(req, "Location", "/");
-        return httpd_resp_send(req, NULL, 0);
+    const char *userMatch = strstr(content, "user=admin");
+    const char *passPos = strstr(content, "password=");
+
+    if (userMatch && passPos) {
+        // Extract password from form string
+        char password[32] = {0};
+        strncpy(password, passPos + strlen("password="), sizeof(password) - 1);
+
+        // Compare against stored password
+        if (strcmp(password, globalConfig.adminPassword) == 0) {
+            httpd_resp_set_hdr(req, "Set-Cookie", "sessionToken=loggedIn; Path=/;");
+            httpd_resp_set_status(req, "302 Found");
+            httpd_resp_set_hdr(req, "Location", "/");
+            return httpd_resp_send(req, NULL, 0);
+        }
     }
-    return serve_login_page(req, true); // Login failed
+
+    return serve_login_page(req, true);  // Login failed
 }
 
 static esp_err_t HTTP_get_router(httpd_req_t *req) {
