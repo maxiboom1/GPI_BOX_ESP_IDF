@@ -27,18 +27,13 @@ void app_main(void)
 
 // Utility debug
 void test_debug(void){
-	
 	// *******Example for delay (must include freertos/idf_additions.h header)*******
 	//#include "freertos/idf_additions.h" // this for delay use
 	vTaskDelay(pdMS_TO_TICKS(5000));  // Wait 1 seconds
 	
-	
 	// *******Example for message builder trigger*******
 	char msg[256];
-	construct_message("gpioChange", "HIGH", msg, sizeof(msg));
+	construct_message("gpioChange", "HIGH","admin","password", msg, sizeof(msg));
 	send_http_post(msg);
 	
-	
 }
-
-
