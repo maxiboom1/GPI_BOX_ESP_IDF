@@ -249,6 +249,10 @@ Only one mode can be active at a time:
 
 ## Change Log
 
+## v0.16
+
+- gpio_handler
+
 ## v0.15
 
 - Implemented tcp client module - shared both for companion and raw tcp. have start and stop funcs.

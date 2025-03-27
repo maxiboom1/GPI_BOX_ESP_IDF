@@ -1,4 +1,4 @@
-idf_component_register(SRCS "message_buider.c"
+idf_component_register(SRCS "message_builder.c"
                     INCLUDE_DIRS "."
                     REQUIRES json)
 

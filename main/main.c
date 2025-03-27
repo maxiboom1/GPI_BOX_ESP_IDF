@@ -3,11 +3,11 @@
 #include "spiffs_setup.h"
 #include "esp_log.h"
 #include "app_config.h"
-#include <message_buider.h>
+#include "message_builder.h"
 #include <http_client.h>
 #include "freertos/idf_additions.h"
 #include "tcp_client.h"
-
+#include "gpio_handler.h"
 #include "esp_netif.h"
 #include "esp_netif_types.h"
 
@@ -25,7 +25,7 @@ void app_main(void)
 	wait_for_eth_ready();
     handle_config_change(); 
 	ESP_ERROR_CHECK(init_spiffs());  
-    
+    ESP_ERROR_CHECK(init_gpio_pins());
     ESP_ERROR_CHECK(start_webserver());
     
     ESP_LOGI("MAIN", "Loaded Config:");
