@@ -82,7 +82,7 @@ function sendJson() {
         ip: document.getElementById('ip').value,
         gateway: document.getElementById('gateway').value,
         subnetMask: document.getElementById('subnetMask').value,
-        companionMode: document.getElementById('companionEnabled').value,
+        companionMode: document.getElementById('companionEnabled').checked,
         tcpEnabled:document.getElementById('tcpEnabled').checked,
         httpEnabled:document.getElementById('httpEnabled').checked,
         serialEnabled: document.getElementById('serialEnabled').checked

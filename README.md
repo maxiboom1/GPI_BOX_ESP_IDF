@@ -195,6 +195,11 @@ The GPIO Box serves as a versatile, network-enabled input/output controller for 
 
 ## Change Log
 
+## v0.141 - minor fix
+
+- Fixed js logic for companion enabled mod
+- "manual block" div is hidden by default - avoids jumping on load
+
 ## v0.14
 - Implemented `http_client` component for sending JSON via HTTP POST:
   - Uses `esp_http_client`
