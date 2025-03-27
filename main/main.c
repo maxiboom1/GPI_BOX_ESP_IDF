@@ -6,9 +6,14 @@
 #include <message_buider.h>
 #include <http_client.h>
 #include "freertos/idf_additions.h"
+#include "tcp_client.h"
 
-// Forward declaration for debug utility
+#include "esp_netif.h"
+#include "esp_netif_types.h"
+
+// Forward declarations
 void test_debug(void);
+void wait_for_eth_ready(void);
 
 void app_main(void)
 {
@@ -17,12 +22,25 @@ void app_main(void)
     
     ESP_ERROR_CHECK(init_ethernet_static());
     
-    ESP_ERROR_CHECK(init_spiffs());  
+	wait_for_eth_ready();
+    handle_config_change(); 
+	ESP_ERROR_CHECK(init_spiffs());  
     
     ESP_ERROR_CHECK(start_webserver());
     
     ESP_LOGI("MAIN", "Loaded Config:");
-	test_debug();
+	//test_debug();
+}
+
+void wait_for_eth_ready() {
+    esp_netif_ip_info_t ip_info;
+    esp_netif_t* netif = esp_netif_get_handle_from_ifkey("ETH_DEF");
+
+    while (esp_netif_get_ip_info(netif, &ip_info) != ESP_OK || ip_info.ip.addr == 0) {
+        ESP_LOGW("NET_WAIT", "Waiting for Ethernet to be ready...");
+        vTaskDelay(pdMS_TO_TICKS(200));
+    }
+    ESP_LOGI("NET_WAIT", "Ethernet is ready with IP: " IPSTR, IP2STR(&ip_info.ip));
 }
 
 // Utility debug

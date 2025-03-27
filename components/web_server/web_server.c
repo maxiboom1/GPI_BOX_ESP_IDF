@@ -221,14 +221,32 @@ static esp_err_t handle_save_config(httpd_req_t *req) {
     }
 
     const char* val;
+    bool ip_changed = false;
 
     // Network
-    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "ip"))))
-        globalConfig.deviceIp = ipaddr_addr(val);
-    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "gateway"))))
-        globalConfig.gateway = ipaddr_addr(val);
-    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "subnetMask"))))
-        globalConfig.subnetMask = ipaddr_addr(val);
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "ip")))) {
+        ip4_addr_t new_ip = { .addr = ipaddr_addr(val) };
+        if (globalConfig.deviceIp != new_ip.addr) {
+            globalConfig.deviceIp = new_ip.addr;
+            ip_changed = true;
+        }
+    }
+
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "gateway")))) {
+        ip4_addr_t new_gw = { .addr = ipaddr_addr(val) };
+        if (globalConfig.gateway != new_gw.addr) {
+            globalConfig.gateway = new_gw.addr;
+            ip_changed = true;
+        }
+    }
+
+    if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "subnetMask")))) {
+        ip4_addr_t new_mask = { .addr = ipaddr_addr(val) };
+        if (globalConfig.subnetMask != new_mask.addr) {
+            globalConfig.subnetMask = new_mask.addr;
+            ip_changed = true;
+        }
+    }
 
     // Companion
     if (cJSON_HasObjectItem(json, "companionMode"))
@@ -275,7 +293,7 @@ static esp_err_t handle_save_config(httpd_req_t *req) {
 
     cJSON_Delete(json);
     save_config();
-    reapply_eth_config();  // Apply static IP change without reboot
+    if (ip_changed) {reapply_eth_config();}  
     httpd_resp_set_status(req, "302 Found");
     httpd_resp_set_hdr(req, "Location", "/");
     return httpd_resp_send(req, NULL, 0);

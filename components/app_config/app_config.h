@@ -34,3 +34,4 @@ esp_err_t init_config(void);
 esp_err_t load_config(void);
 esp_err_t save_config(void);
 void set_default_config(void);
+void handle_config_change(void);

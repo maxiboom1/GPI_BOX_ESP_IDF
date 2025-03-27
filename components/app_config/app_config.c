@@ -4,9 +4,24 @@
 #include "esp_log.h"
 #include "lwip/ip_addr.h"
 #include <string.h>
+#include "tcp_client.h"  
 
 static const char *TAG = "APP_CONFIG";
 AppConfig globalConfig;  // Define global config object
+
+// Triggers on every config change. Handles modules on/off based on config
+void handle_config_change(void) {
+    stop_tcp_client_service();
+    ESP_LOGE(TAG, "Stopping tcp-service");
+    vTaskDelay(pdMS_TO_TICKS(1500));  // delay before restarting
+    if (globalConfig.tcpEnabled) {
+        ESP_LOGE(TAG, "Start tcp-service as regular");
+        start_tcp_client_service(TCP_MODE_REGULAR);
+    } else if (globalConfig.companionMode) {
+        ESP_LOGE(TAG, "Start tcp-service as companion");
+        start_tcp_client_service(TCP_MODE_COMPANION);
+    }
+}
 
 esp_err_t init_config() {
     esp_err_t err = nvs_flash_init();
@@ -48,6 +63,7 @@ esp_err_t load_config(void) {
     }
 
     nvs_close(nvs_handle);
+    //handle_config_change();
     return ESP_OK;
 }
 
@@ -72,6 +88,7 @@ esp_err_t save_config(void) {
     }
 
     nvs_close(nvs_handle);
+    handle_config_change();
     return err;
 }
 

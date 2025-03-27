@@ -174,33 +174,38 @@ Only one mode can be active at a time:
 ## ESP32 Wiring and GPIO Mapping
 
 ### Hardware Configuration
-- **Development Board**: ESP32-WROOM-32 (30-pin layout).
+- **Development Board**: ESP32-WROOM-32 (30-pin layout). (https://lastminuteengineers.com/esp32-pinout-reference/)
 - **Current Usage**:
-  - **LEDs**: GPIO 21 (SDA, I2C for 1602 LCD), GPIO 22 (SCL, I2C for 1602 LCD).
   - **W5500 Ethernet Module**:
     - GPIO 15 (CS, chip select, defined as W5500_CS).
     - GPIO 18 (SCK, SPI clock).
     - GPIO 19 (MISO, SPI data in).
     - GPIO 23 (MOSI, SPI data out).
-    - GPIO 4 (RST, reset, confirmed unused after disconnection—freed for GPIO).
-  - **Reset Button**: GPIO 0 (preferred, check if tied to EN; fallback GPIO 26 if needed).
-- **Available GPIO Pins** (after freeing GPIO 4): GPIO 2, 5, 12, 13, 14, 16, 17, 25, 32, 33, 34, 35, 4, 26, 27 (15 pins total).
-  - **RX0/TX0** (GPIO 1, 3): UART0, reserved for Serial debugging unless repurposed.
-  - **VN/VP** (GPIO 36, 39): ADC-only, not usable as GPIOs.
+  - **Reset Button**: GPIO 27
 
-### Assigned Pins:
-| **GPI Inputs (GPI-1 to GPI-8)** | **GPO Outputs (GPO-1 to GPO-8)** |
-|---------------------------------|----------------------------------|
-| GPI-1: GPIO 4                   | GPO-1: GPIO 32                   |
-| GPI-2: GPIO 5                   | GPO-2: GPIO 33                   |
-| GPI-3: GPIO 12                  | GPO-3: GPIO 34                   |
-| GPI-4: GPIO 13                  | GPO-4: GPIO 35                   |
-| GPI-5: GPIO 14                  | GPO-5: GPIO 26  |
-| GPI-6: GPIO 16                  | GPO-6: GPIO 27                   |
-| GPI-7: GPIO 17                  | GPO-7: GPIO 0 (May conflict with reset)                  |
-| GPI-8: GPIO 25                  | GPO-8: n/a |
+### GPIO Pin Allocation
 
-- **Reset Button**: GPIO 0 (preferred, check if tied to EN; fallback GPIO 26).
+| Function           | GPIO Pin | Notes                                  |
+|--------------------|----------|----------------------------------------|
+| **GPI #1**         | GPIO34   | Input-only, no pull-up/down            |
+| **GPI #2**         | GPIO35   | Input-only, no pull-up/down            |
+| **GPI #3**         | GPIO36   | Input-only, no pull-up/down            |
+| **GPI #4**         | GPIO39   | Input-only, no pull-up/down            |
+| **GPI #5**         | GPIO32   | Full-featured GPIO                     |
+| **GPI #6**         | GPIO33   | Full-featured GPIO                     |
+| **GPI #7**         | GPIO25   | Full-featured GPIO                     |
+| **GPI #8**         | GPIO26   | Full-featured GPIO                     |
+| **GPO #1**         | GPIO2    | Strapping pin (safe for output use)    |
+| **GPO #2**         | GPIO4    | Strapping pin                          |
+| **GPO #3**         | GPIO5    | Strapping pin                          |
+| **GPO #4**         | GPIO12   | Strapping pin – avoid HIGH on boot     |
+| **GPO #5**         | GPIO13   | Full-featured GPIO                     |
+| **GPO #6**         | GPIO14   | Full-featured GPIO                     |
+| **GPO #7**         | GPIO16   | Strapping pin                          |
+| **GPO #8**         | GPIO17   | Full-featured GPIO                     |
+| **Reset to Factory**| GPIO27  | Factory reset pin                      |
+
+- H/W reference: https://lastminuteengineers.com/esp32-pinout-reference
 - **Note**: This is working version. The final pin mapping can be different.
 
 #### Notes:
@@ -243,6 +248,12 @@ Only one mode can be active at a time:
 - **Error Handling**: Define behavior for unreachable servers or invalid configs.
 
 ## Change Log
+
+## v0.15
+
+- Implemented tcp client module - shared both for companion and raw tcp. have start and stop funcs.
+- Implemented handle_config_change to analyze config change - and turn on/off relevant functionalities.
+- If user saved config but device network props wasn't changed - we wont trigger network reapply anymore.
 
 ## v0.142 - minor fix
 
