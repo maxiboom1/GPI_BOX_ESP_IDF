@@ -135,23 +135,28 @@ bool get_gpi_state(uint8_t index) {
 static void gpio_task(void *arg) {
     int index;
     while (1) {
+        // Wait for an event to know which pin to check
         if (xQueueReceive(gpio_evt_queue, &index, portMAX_DELAY)) {
-            int level = gpio_get_level(gpi_pins[index]);
-            int64_t now = esp_timer_get_time() / 1000; // microseconds → ms
+            while (1) {
+                int level = gpio_get_level(gpi_pins[index]); // Read current level
+                int64_t now = esp_timer_get_time() / 1000;   // Current time in ms
 
-            if (level != last_debounce_state[index]) {
-                // Level changed: start (or restart) debounce timer
-                last_debounce_state[index] = level;
-                last_debounce_time[index] = now;
-            } else {
-                // Same level as before, check if debounce period passed
-                if ((now - last_debounce_time[index]) >= DEBOUNCE_DELAY_MS) {
-                    if (level != last_stable_state[index]) {
-                        last_stable_state[index] = level;
-                        gpi_states[index] = level;
-                        handle_gpio_input_change(gpi_pins[index], level);
+                if (level != last_debounce_state[index]) {
+                    // Level changed: start (or restart) debounce timer
+                    last_debounce_state[index] = level;
+                    last_debounce_time[index] = now;
+                } else {
+                    // Same level as before, check if debounce period has passed
+                    if ((now - last_debounce_time[index]) >= DEBOUNCE_DELAY_MS) {
+                        if (level != last_stable_state[index]) {
+                            last_stable_state[index] = level;
+                            gpi_states[index] = level;
+                            handle_gpio_input_change(gpi_pins[index], level);
+                        }
+                        break; // Exit inner loop once state is stable
                     }
                 }
+                vTaskDelay(pdMS_TO_TICKS(10)); // Small delay to avoid busy-waiting
             }
         }
     }

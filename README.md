@@ -249,6 +249,11 @@ Only one mode can be active at a time:
 
 ## Change Log
 
+## v0.17
+
+- Fixed gpi debouncer logic
+- Implemented TCP HTTP client instead relying on http library - this still non blocking fire and forget logic, but much more efficient and and lighter in term of systems resources.
+
 ## v0.16
 
 - gpio_handler
