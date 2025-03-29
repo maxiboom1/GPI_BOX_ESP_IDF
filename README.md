@@ -208,11 +208,6 @@ Only one mode can be active at a time:
 - H/W reference: https://lastminuteengineers.com/esp32-pinout-reference
 - **Note**: This is working version. The final pin mapping can be different.
 
-#### Notes:
-- Verify GPIO 0 isn’t the EN pin (typically tied to EN on some boards, requiring pull-up). If it is, use GPIO 26 for reset.
-- RX0/TX0 (GPIO 1, 3) can be repurposed later if Serial isn’t needed, but keep for debugging now.
-- All GPI/GPO pins support input/output, PWM, interrupt—adequate for our needs.
-
 ## NVR memory Structure
 
 | **Field**      | **Size (Bytes)** | **Default Value** |
