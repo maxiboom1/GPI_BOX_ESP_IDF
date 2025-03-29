@@ -242,12 +242,39 @@ Only one mode can be active at a time:
 - Empty IP/URL/port defaults to 0.0.0.0, `""`, or 0, requiring user configuration.
 - URL length (64 bytes, offset 77-140) allows up to 64 characters (e.g., `http://10.168.0.10/api` fits, max length for URLs in NVR).
 
+## GPO Control via TCP Commands
+
+- **Functionality**: Control GPO pins with JSON commands over TCP.  
+  - Example: `{"event":"GPO-2","state":"HIGH"}` sets GPO-2 to HIGH.  
+  - Tested with relays on GPO-1 and GPO-4 via Hercules.  
+- **Implementation**:  
+  - Parse commands with `cJSON`.  
+  - Set GPO pins using `gpio_set_level` in `gpio_handler.c`.  
+- **Edge Cases**:  
+  - Handles `GPO-02` and `GPO-2`.  
+  - Rapid commands may concatenate (e.g., `{"event":"GPO-4","state":"LOW"}{"event":"GPO-4","state":"LOW"}`).  
+- **Current Status**:  
+  - Works for single/moderate-rate commands.  
+  - Successfully controls relays—solid result!  
+- **Known Issues**:  
+  - Rapid commands concatenate in TCP buffer, risking parse errors.  
+- **Planned Improvement**:  
+  - Add ACK mechanism:  
+    - Device sends `{"ack":"GPO-4","status":"done"}` after each command.  
+    - Sender waits for ACK before next command.  
+    - Ensures sequential processing, avoids concatenation with multiple GPOs (up to 5).
+
 ## Future Enhancements
 
 - **GPO Control**: Remotely trigger GPO-1 to GPO-8 via TCP, HTTP, or Serial commands (e.g., `{"event": "GPO-1", "state": "HIGH", "user": "", "password": ""}`).
 - **Error Handling**: Define behavior for unreachable servers or invalid configs.
 
 ## Change Log
+
+### v0.18
+- Added GPO control via TCP commands.  
+- Implemented `trigger_gpo` in `gpio_handler.c` for relay control.  
+- Tested with Hercules; handles edge cases but noted rapid command concatenation issue.
 
 ## v0.17
 

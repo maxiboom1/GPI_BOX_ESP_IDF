@@ -6,5 +6,5 @@
 
 esp_err_t init_gpio_pins(void);
 void handle_gpio_input_change(gpio_num_t gpio, int level);
-void set_gpo_state(uint8_t index, bool state);
+void trigger_gpo(uint8_t gpo_num, bool state);
 bool get_gpi_state(uint8_t index);

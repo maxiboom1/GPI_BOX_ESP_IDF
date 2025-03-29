@@ -5,6 +5,8 @@
 #include <string.h>
 #include <unistd.h>
 #include "freertos/task.h"
+#include "cJSON.h"
+#include "gpio_handler.h"
 
 #define TAG "TCP_CLIENT"
 
@@ -12,6 +14,7 @@ extern AppConfig globalConfig;
 static int tcp_socket = -1;
 static TaskHandle_t tcp_task = NULL;
 static TcpClientMode client_mode;
+static void process_incoming_command(const char *data);
 
 static void tcp_client_task(void *arg) {
     
@@ -77,7 +80,7 @@ static void tcp_client_task(void *arg) {
             } else {
                 rx_buffer[len] = 0;
                 ESP_LOGI(TAG, "Received: %s", rx_buffer);
-                // TODO: parse GPO command here later
+                process_incoming_command(rx_buffer); // Parse and handle GPO commands
             }
         }
 
@@ -122,4 +125,29 @@ esp_err_t tcp_client_send(const char *json_data) {
 
     ESP_LOGI(TAG, "TCP message sent");
     return ESP_OK;
+}
+
+// Function to process incoming GPO commands
+static void process_incoming_command(const char *data) {
+    cJSON *json = cJSON_Parse(data);
+    if (!json) {
+        ESP_LOGE(TAG, "Failed to parse JSON: %s", data);
+        return;
+    }
+
+    const cJSON *event = cJSON_GetObjectItem(json, "event");
+    const cJSON *state = cJSON_GetObjectItem(json, "state");
+
+    if (event && state && cJSON_IsString(event) && cJSON_IsString(state)) {
+        if (strncmp(event->valuestring, "GPO-", 4) == 0) {
+            int gpo_num = atoi(event->valuestring + 4); // Get number after "GPO-"
+            if (gpo_num >= 1 && gpo_num <= 5) {
+                bool set_high = strcmp(state->valuestring, "HIGH") == 0;
+                trigger_gpo(gpo_num, set_high); // Call your function
+            } else {
+                ESP_LOGW(TAG, "Invalid GPO number: %d", gpo_num);
+            }
+        }
+    }
+    cJSON_Delete(json);
 }

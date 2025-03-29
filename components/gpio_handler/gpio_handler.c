@@ -122,16 +122,7 @@ void handle_gpio_input_change(gpio_num_t gpio, int level) {
     }
 }
 
-void set_gpo_state(uint8_t index, bool state) {
-    if (index < 5) {
-        gpio_set_level(gpo_pins[index], state);
-    }
-}
-
-bool get_gpi_state(uint8_t index) {
-    return (index < 8) ? gpi_states[index] : false;
-}
-
+// This is the debounce logic
 static void gpio_task(void *arg) {
     int index;
     while (1) {
@@ -159,5 +150,19 @@ static void gpio_task(void *arg) {
                 vTaskDelay(pdMS_TO_TICKS(10)); // Small delay to avoid busy-waiting
             }
         }
+    }
+}
+
+bool get_gpi_state(uint8_t index) {
+    return (index < 8) ? gpi_states[index] : false;
+}
+
+void trigger_gpo(uint8_t gpo_num, bool state) {
+    if (gpo_num >= 1 && gpo_num <= 5) {
+        int level = state ? 1 : 0;
+        gpio_set_level(gpo_pins[gpo_num - 1], level);
+        ESP_LOGI(TAG, "Set GPO-%d to %s", gpo_num, state ? "HIGH" : "LOW");
+    } else {
+        ESP_LOGW(TAG, "Invalid GPO number: %d", gpo_num);
     }
 }
