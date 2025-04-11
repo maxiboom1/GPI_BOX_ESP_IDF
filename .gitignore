@@ -1,3 +1,7 @@
 settings
 build
 pytest_eth_basic.py
+.project
+.cproject
+.settings
+.vscode
