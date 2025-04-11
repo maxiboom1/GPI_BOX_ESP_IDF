@@ -17,6 +17,8 @@
 static int last_stable_state[8] = {0};
 static int last_debounce_state[8] = {0};
 static int64_t last_debounce_time[8] = {0};
+static bool gpo_states[5] = {0};  //stores last known GPO states, serves sync requests
+
 
 static QueueHandle_t gpio_evt_queue = NULL;
 
@@ -153,16 +155,31 @@ static void gpio_task(void *arg) {
     }
 }
 
-bool get_gpi_state(uint8_t index) {
-    return (index < 8) ? gpi_states[index] : false;
-}
-
 void trigger_gpo(uint8_t gpo_num, bool state) {
     if (gpo_num >= 1 && gpo_num <= 5) {
         int level = state ? 1 : 0;
+        gpo_states[gpo_num - 1] = state;  // Update the state 
         gpio_set_level(gpo_pins[gpo_num - 1], level);
         ESP_LOGI(TAG, "Set GPO-%d to %s", gpo_num, state ? "HIGH" : "LOW");
     } else {
         ESP_LOGW(TAG, "Invalid GPO number: %d", gpo_num);
     }
+}
+
+//*************** States and configured pins count getters for sync response *****************************//
+
+bool get_gpi_state(uint8_t index) {
+    return (index < 8) ? gpi_states[index] : false;
+}
+
+bool get_gpo_state(uint8_t index) {
+    return (index < 5) ? gpo_states[index] : false;
+}
+
+uint8_t get_gpi_count(void) {
+    return sizeof(gpi_pins) / sizeof(gpi_pins[0]);
+}
+
+uint8_t get_gpo_count(void) {
+    return sizeof(gpo_pins) / sizeof(gpo_pins[0]);
 }

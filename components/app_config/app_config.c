@@ -68,8 +68,11 @@ esp_err_t load_config(void) {
 }
 
 esp_err_t save_config(void) {
+    
     nvs_handle_t nvs_handle;
+    
     esp_err_t err = nvs_open("storage", NVS_READWRITE, &nvs_handle);
+    
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to open NVS storage for writing: %s", esp_err_to_name(err));
         return err;

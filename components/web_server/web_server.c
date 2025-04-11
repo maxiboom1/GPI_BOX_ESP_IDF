@@ -223,7 +223,7 @@ static esp_err_t handle_save_config(httpd_req_t *req) {
     const char* val;
     bool ip_changed = false;
 
-    // Network
+    // Here we compare existing network settings with new one
     if ((val = cJSON_GetStringValue(cJSON_GetObjectItem(json, "ip")))) {
         ip4_addr_t new_ip = { .addr = ipaddr_addr(val) };
         if (globalConfig.deviceIp != new_ip.addr) {
@@ -293,7 +293,8 @@ static esp_err_t handle_save_config(httpd_req_t *req) {
 
     cJSON_Delete(json);
     save_config();
-    if (ip_changed) {reapply_eth_config();}  
+    if (ip_changed) {reapply_eth_config();}
+    ESP_LOGI(TAG, "Finished processing save");
     httpd_resp_set_status(req, "302 Found");
     httpd_resp_set_hdr(req, "Location", "/");
     return httpd_resp_send(req, NULL, 0);

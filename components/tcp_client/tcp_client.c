@@ -127,6 +127,35 @@ esp_err_t tcp_client_send(const char *json_data) {
     return ESP_OK;
 }
 
+// Uses get_gpo_state and get_gpi_state from gpio module to get the current pin states
+static void generate_sync_response(char *out_json, size_t max_len) {
+    cJSON *root = cJSON_CreateObject();
+    cJSON *gpi = cJSON_CreateObject();
+    cJSON *gpo = cJSON_CreateObject();
+
+    for (int i = 0; i < get_gpi_count(); i++) {
+        char key[8];
+        snprintf(key, sizeof(key), "GPI-%d", i + 1);
+        cJSON_AddStringToObject(gpi, key, get_gpi_state(i) ? "HIGH" : "LOW");
+    }
+
+    for (int i = 0; i < get_gpo_count(); i++) {
+        char key[8];
+        snprintf(key, sizeof(key), "GPO-%d", i + 1);
+        cJSON_AddStringToObject(gpo, key, get_gpo_state(i) ? "HIGH" : "LOW");
+    }
+
+    cJSON_AddStringToObject(root, "event", "sync-response");
+    cJSON_AddItemToObject(root, "gpi", gpi);
+    cJSON_AddItemToObject(root, "gpo", gpo);
+
+    if (!cJSON_PrintPreallocated(root, out_json, max_len, 0)) {
+        strcpy(out_json, "{\"event\":\"sync-response\",\"error\":\"buffer-too-small\"}");
+    }
+
+    cJSON_Delete(root);
+}
+
 // Function to process incoming GPO commands
 static void process_incoming_command(const char *data) {
     cJSON *json = cJSON_Parse(data);
@@ -143,10 +172,16 @@ static void process_incoming_command(const char *data) {
             int gpo_num = atoi(event->valuestring + 4); // Get number after "GPO-"
             if (gpo_num >= 1 && gpo_num <= 5) {
                 bool set_high = strcmp(state->valuestring, "HIGH") == 0;
-                trigger_gpo(gpo_num, set_high); // Call your function
+                trigger_gpo(gpo_num, set_high);
             } else {
                 ESP_LOGW(TAG, "Invalid GPO number: %d", gpo_num);
             }
+        } 
+        
+        else if (strcmp(event->valuestring, "sync") == 0 && strcmp(state->valuestring, "request") == 0) {
+            char syncJson[512];
+            generate_sync_response(syncJson, sizeof(syncJson));
+            tcp_client_send(syncJson);
         }
     }
     cJSON_Delete(json);
