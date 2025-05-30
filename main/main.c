@@ -17,19 +17,20 @@ void wait_for_eth_ready(void);
 
 void app_main(void)
 {
-	ESP_ERROR_CHECK(init_config());
-    ESP_ERROR_CHECK(load_config());
+	ESP_ERROR_CHECK(init_config()); //On each load - the nvs storage must be initialized
+    ESP_ERROR_CHECK(load_config()); //Once the initialization is done - we can load the config to globalConfig
     
-    ESP_ERROR_CHECK(init_ethernet_static());
+    ESP_ERROR_CHECK(init_ethernet_static()); //Initializes W5500 with static IP using values from globalConfig
     
-	wait_for_eth_ready();
-    handle_config_change(); 
-	ESP_ERROR_CHECK(init_spiffs());  
-    ESP_ERROR_CHECK(init_gpio_pins());
-    ESP_ERROR_CHECK(start_webserver());
+	wait_for_eth_ready(); // Waits until IP is assigned and Ethernet is fully up.
+    handle_config_change(); // This determines if tcp_client_task needs to be started (regular or Companion mode)
+	ESP_ERROR_CHECK(init_spiffs()); // Mounts /spiffs_data partition, where HTML/JS/CSS is located.
+    ESP_ERROR_CHECK(init_gpio_pins()); // Initializes all GPI pins with ISR/debounce, and GPO pins as outputs
+    ESP_ERROR_CHECK(start_webserver()); // Starts HTTP server, sets up routes for /, /save, etc.
     
     ESP_LOGI("MAIN", "Loaded Config:");
-	//test_debug();
+
+    //test_debug(); // manual debug helper
 }
 
 void wait_for_eth_ready() {
